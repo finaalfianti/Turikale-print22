@@ -98,42 +98,48 @@ $coreTeam = [
     ],
 ];
 
-// PKL Members (SMK / Vokasi)
+// PKL Members (SMK / Vokasi) - 4 Anggota Utama
 $pklTeam = [
     [
         'name'     => 'Rizky',
         'instansi' => 'SMK Negeri 1 Maros',
         'role'     => 'Siswa PKL',
         'photo'    => 'assets/images/riki-img.jpeg',
+        'year'     => '2025',
     ],
     [
         'name'     => 'Anggi',
         'instansi' => 'SMK Negeri 1 Maros',
         'role'     => 'Siswa PKL',
         'photo'    => 'assets/images/anggi-img.jpeg',
+        'year'     => '2025',
     ],
     [
         'name'     => 'Pute',
         'instansi' => 'SMK Negeri 1 Maros',
         'role'     => 'Siswa PKL',
         'photo'    => 'assets/images/pute-img.jpeg',
+        'year'     => '2025',
     ],
     [
         'name'     => 'Salwa',
         'instansi' => 'SMK Negeri 1 Maros',
         'role'     => 'Siswa PKL',
         'photo'    => 'assets/images/salwa-img.jpeg',
+        'year'     => '2025',
     ],
 ];
 
-// Magang Nasional Members
+// Magang Nasional Members - Kategori Tahun 2025 (Batch 1 & Batch 2)
 $magangTeam = [
+    // --- Tahun 2025: Batch 1 ---
     [
         'name'     => 'Dila',
         'instansi' => 'Universitas Negeri Makassar',
         'role'     => 'Desain Grafis',
         'photo'    => 'assets/images/dila-img.jpg',
         'batch'    => 'batch-1',
+        'year'     => '2025',
     ],
     [
         'name'     => 'Fahmi',
@@ -141,6 +147,7 @@ $magangTeam = [
         'role'     => 'Digital Marketing',
         'photo'    => 'assets/images/mahdi-img.jpg',
         'batch'    => 'batch-1',
+        'year'     => '2025',
     ],
     [
         'name'     => 'Lia',
@@ -148,6 +155,7 @@ $magangTeam = [
         'role'     => 'Produksi Cetak',
         'photo'    => 'assets/images/lia-img.jpg',
         'batch'    => 'batch-1',
+        'year'     => '2025',
     ],
     [
         'name'     => 'Nurul',
@@ -155,13 +163,16 @@ $magangTeam = [
         'role'     => 'Administrasi',
         'photo'    => 'assets/images/nurul-img.jpg',
         'batch'    => 'batch-1',
+        'year'     => '2025',
     ],
+    // --- Tahun 2025: Batch 2 ---
     [
         'name'     => 'Adit',
         'instansi' => 'SMK Negeri Maros',
         'role'     => 'Operator Mesin',
         'photo'    => 'assets/images/adit-img.jpg',
         'batch'    => 'batch-2',
+        'year'     => '2025',
     ],
     [
         'name'     => 'Himawan',
@@ -169,6 +180,7 @@ $magangTeam = [
         'role'     => 'Multimedia',
         'photo'    => 'assets/images/hima-img.jpg',
         'batch'    => 'batch-2',
+        'year'     => '2025',
     ],
     [
         'name'     => 'Arul',
@@ -176,8 +188,66 @@ $magangTeam = [
         'role'     => 'Desain & Layout',
         'photo'    => 'assets/images/arul-img.jpg',
         'batch'    => 'batch-2',
+        'year'     => '2025',
     ],
 ];
+
+// Integrasi Dinamis: Muat data anggota dari database CMS jika telah ditambahkan
+if (isset($pdo) && $pdo instanceof PDO) {
+    try {
+        $stmtMem = $pdo->query("
+            SELECT m.*, b.name AS batch_name, s.id AS sec_id
+            FROM tp_profile_members m
+            JOIN tp_profile_batches b ON m.batch_id = b.id
+            JOIN tp_profile_sections s ON b.section_id = s.id
+            WHERE m.status = 1
+            ORDER BY s.sort_order ASC, b.sort_order ASC, m.sort_order ASC, m.id ASC
+        ");
+        $cmsMembers = $stmtMem ? $stmtMem->fetchAll(PDO::FETCH_ASSOC) : [];
+
+        if (!empty($cmsMembers)) {
+            $cmsCore = [];
+            $cmsPkl = [];
+            $cmsMagang = [];
+
+            foreach ($cmsMembers as $cm) {
+                $year = !empty($cm['year']) ? (string)$cm['year'] : '2025';
+                if (empty($cm['year']) && preg_match('/202\d/', $cm['batch_name'], $ym)) {
+                    $year = $ym[0];
+                }
+                $batchSlug = 'batch-1';
+                if (preg_match('/batch\s*(\d+)/i', $cm['batch_name'], $bm)) {
+                    $batchSlug = 'batch-' . $bm[1];
+                } elseif (stripos($cm['batch_name'], 'batch 2') !== false) {
+                    $batchSlug = 'batch-2';
+                } elseif (stripos($cm['batch_name'], 'batch 3') !== false) {
+                    $batchSlug = 'batch-3';
+                }
+
+                $item = [
+                    'name'     => $cm['name'],
+                    'instansi' => $cm['instansi'] ?? '',
+                    'role'     => $cm['posisi'] ?: 'Anggota',
+                    'photo'    => $cm['photo'] ?? '',
+                    'batch'    => $batchSlug,
+                    'year'     => $year,
+                ];
+
+                if ($cm['sec_id'] == 1) {
+                    $cmsCore[] = $item;
+                } elseif ($cm['sec_id'] == 2) {
+                    $cmsPkl[] = $item;
+                } elseif ($cm['sec_id'] == 3) {
+                    $cmsMagang[] = $item;
+                }
+            }
+
+            if (!empty($cmsCore)) $coreTeam = $cmsCore;
+            if (!empty($cmsPkl)) $pklTeam = $cmsPkl;
+            if (!empty($cmsMagang)) $magangTeam = $cmsMagang;
+        }
+    } catch (Throwable $e) {}
+}
 ?>
 <!doctype html>
 <html lang="id">
@@ -362,16 +432,53 @@ $magangTeam = [
                         <h2 id="magang-heading" class="prof-section-title">Program Magang Nasional</h2>
                         <p class="prof-section-desc">Kolaborasi bersama kementerian ketenagakerjaan dan perguruan tinggi dalam program magang bersertifikat industri percetakan digital.</p>
                     </div>
-                    <div class="prof-filter-tabs" role="tablist">
-                        <button type="button" class="prof-filter-btn active" data-filter="all">Semua</button>
-                        <button type="button" class="prof-filter-btn" data-filter="batch-1">Batch 1</button>
-                        <button type="button" class="prof-filter-btn" data-filter="batch-2">Batch 2</button>
+                    <?php
+                    $magangYears = ['2025', '2026'];
+                    foreach ($magangTeam as $mItem) {
+                        if (!empty($mItem['year']) && !in_array($mItem['year'], $magangYears)) {
+                            $magangYears[] = $mItem['year'];
+                        }
+                    }
+                    sort($magangYears);
+
+                    $magangBatches = ['batch-1', 'batch-2', 'batch-3'];
+                    foreach ($magangTeam as $mItem) {
+                        if (!empty($mItem['batch']) && !in_array($mItem['batch'], $magangBatches)) {
+                            $magangBatches[] = $mItem['batch'];
+                        }
+                    }
+                    ?>
+                    <div class="prof-filters-wrapper">
+                        <div class="prof-filter-row">
+                            <span class="prof-filter-label">Kategori Tahun:</span>
+                            <button type="button" class="prof-filter-btn active" data-magang-year="all">Semua Tahun</button>
+                            <?php foreach ($magangYears as $yVal): ?>
+                            <button type="button" class="prof-filter-btn" data-magang-year="<?= htmlspecialchars($yVal) ?>">Tahun <?= htmlspecialchars($yVal) ?></button>
+                            <?php endforeach; ?>
+                        </div>
+                        <div class="prof-filter-row">
+                            <span class="prof-filter-label">Kategori Batch:</span>
+                            <button type="button" class="prof-filter-btn active" data-magang-batch="all">Semua Batch</button>
+                            <?php foreach ($magangBatches as $bVal): 
+                                $bNum = str_replace('batch-', '', $bVal);
+                                $bLabel = is_numeric($bNum) ? 'Batch ' . $bNum : ucfirst($bNum);
+                            ?>
+                            <button type="button" class="prof-filter-btn" data-magang-batch="<?= htmlspecialchars($bVal) ?>"><?= htmlspecialchars($bLabel) ?></button>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
                 </div>
 
                 <div class="prof-grid-4" id="magangGrid">
-                    <?php foreach ($magangTeam as $intern): ?>
-                    <div class="prof-team-card" data-batch="<?= htmlspecialchars($intern['batch']) ?>">
+                    <?php foreach ($magangTeam as $intern): 
+                        $internYear = $intern['year'] ?? '2025';
+                        $batchNum = str_replace('batch-', '', $intern['batch'] ?? '1');
+                    ?>
+                    <div class="prof-team-card" data-year="<?= htmlspecialchars($internYear) ?>" data-batch="<?= htmlspecialchars($intern['batch']) ?>">
+                        <span class="prof-card-tag <?= $internYear === '2026' ? 'tag-2026' : 'tag-2025' ?>">
+                            <?= htmlspecialchars($internYear) ?> • Batch <?= htmlspecialchars($batchNum) ?>
+                        </span>
+
                         <div class="prof-avatar-wrap">
                             <?php if (!empty($intern['photo']) && file_exists(__DIR__ . '/../' . $intern['photo'])): ?>
                             <img src="<?= $basePath . htmlspecialchars($intern['photo']) ?>" alt="<?= htmlspecialchars($intern['name']) ?>" loading="lazy" />
@@ -384,6 +491,9 @@ $magangTeam = [
                         <span class="prof-team-role"><?= htmlspecialchars($intern['role']) ?></span>
                     </div>
                     <?php endforeach; ?>
+                    <div id="magangEmptyState" class="prof-empty-state" style="display: none;">
+                        Belum ada anggota untuk kategori/batch yang dipilih. Anggota baru dapat ditambahkan melalui panel CMS.
+                    </div>
                 </div>
             </div>
         </section>
@@ -393,27 +503,53 @@ $magangTeam = [
     <!-- Include Footer -->
     <?php include __DIR__ . '/../includes/footer.php'; ?>
 
-    <!-- Interactive Script for Batch Filter -->
+    <!-- Interactive Script for Magang Category Filters (Year & Batch) -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const filterBtns = document.querySelectorAll('.prof-filter-btn');
-        const cards = document.querySelectorAll('#magangGrid .prof-team-card');
+        let currentMagangYear = 'all';
+        let currentMagangBatch = 'all';
+        const magangYearBtns = document.querySelectorAll('[data-magang-year]');
+        const magangBatchBtns = document.querySelectorAll('[data-magang-batch]');
+        const magangCards = document.querySelectorAll('#magangGrid .prof-team-card');
+        const emptyState = document.getElementById('magangEmptyState');
 
-        filterBtns.forEach(btn => {
+        function filterMagang() {
+            let visibleCount = 0;
+            magangCards.forEach(card => {
+                const cardYear = card.getAttribute('data-year');
+                const cardBatch = card.getAttribute('data-batch');
+
+                const matchYear = (currentMagangYear === 'all' || cardYear === currentMagangYear);
+                const matchBatch = (currentMagangBatch === 'all' || cardBatch === currentMagangBatch);
+
+                if (matchYear && matchBatch) {
+                    card.classList.remove('fade-hidden');
+                    visibleCount++;
+                } else {
+                    card.classList.add('fade-hidden');
+                }
+            });
+
+            if (emptyState) {
+                emptyState.style.display = (visibleCount === 0) ? 'block' : 'none';
+            }
+        }
+
+        magangYearBtns.forEach(btn => {
             btn.addEventListener('click', function() {
-                filterBtns.forEach(b => b.classList.remove('active'));
+                magangYearBtns.forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
+                currentMagangYear = this.getAttribute('data-magang-year');
+                filterMagang();
+            });
+        });
 
-                const filter = this.getAttribute('data-filter');
-
-                cards.forEach(card => {
-                    const batch = card.getAttribute('data-batch');
-                    if (filter === 'all' || batch === filter) {
-                        card.classList.remove('fade-hidden');
-                    } else {
-                        card.classList.add('fade-hidden');
-                    }
-                });
+        magangBatchBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                magangBatchBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentMagangBatch = this.getAttribute('data-magang-batch');
+                filterMagang();
             });
         });
     });

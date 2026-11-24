@@ -567,18 +567,18 @@ img {
 
 .calc-btn-row {
     display: flex;
-    gap: 14px;
     margin: 20px 0;
 }
 
 .btn-calc-hit {
+    width: 100%;
     flex: 1;
     background: var(--btn-hitung);
     color: #ffffff;
     border: none;
     border-radius: 10px;
-    padding: 12px 18px;
-    font-size: 14px;
+    padding: 13px 20px;
+    font-size: 15px;
     font-weight: 600;
     font-family: inherit;
     display: flex;
@@ -587,7 +587,7 @@ img {
     gap: 8px;
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(234, 84, 56, 0.3);
-    transition: opacity 0.2s, transform 0.2s;
+    transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 
 .btn-calc-ref {
@@ -609,7 +609,12 @@ img {
     transition: opacity 0.2s, transform 0.2s;
 }
 
-.btn-calc-hit:hover,
+.btn-calc-hit:hover {
+    opacity: 0.95;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(234, 84, 56, 0.4);
+}
+
 .btn-calc-ref:hover {
     opacity: 0.92;
     transform: translateY(-1px);

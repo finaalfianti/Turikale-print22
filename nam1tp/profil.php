@@ -5,6 +5,18 @@ require_admin_auth();
 $db = db();
 $activeTab = $_GET['tab'] ?? 'hero_stats';
 
+// Pastikan kolom 'year' tersedia pada tabel tp_profile_members
+try {
+    $db->exec("ALTER TABLE tp_profile_members ADD COLUMN IF NOT EXISTS year varchar(10) NOT NULL DEFAULT '2025'");
+} catch (Throwable $e) {
+    try {
+        $chkCol = $db->query("SHOW COLUMNS FROM tp_profile_members LIKE 'year'")->fetch();
+        if (!$chkCol) {
+            $db->exec("ALTER TABLE tp_profile_members ADD COLUMN year varchar(10) NOT NULL DEFAULT '2025'");
+        }
+    } catch (Throwable $e2) {}
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
@@ -107,6 +119,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $name = trim($_POST['name'] ?? '');
+        $year = trim($_POST['year'] ?? '2025');
+        if ($year === '') $year = '2025';
         $instansi = trim($_POST['instansi'] ?? '');
         $jurusan = trim($_POST['jurusan'] ?? '');
         $posisi = trim($_POST['posisi'] ?? '');
@@ -123,12 +137,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $frameShape = 'rounded-full';
 
         if ($id > 0) {
-            $stmt = $db->prepare("UPDATE tp_profile_members SET batch_id = ?, name = ?, photo = ?, instansi = ?, jurusan = ?, posisi = ?, sort_order = ?, status = ?, photo_position = ?, frame_shape = ?, updated_at = NOW() WHERE id = ?");
-            $stmt->execute([$batchId, $name, $photo, $instansi, $jurusan, $posisi, $sortOrder, $status, $photoPos, $frameShape, $id]);
+            $stmt = $db->prepare("UPDATE tp_profile_members SET batch_id = ?, name = ?, photo = ?, instansi = ?, jurusan = ?, posisi = ?, sort_order = ?, status = ?, photo_position = ?, frame_shape = ?, year = ?, updated_at = NOW() WHERE id = ?");
+            $stmt->execute([$batchId, $name, $photo, $instansi, $jurusan, $posisi, $sortOrder, $status, $photoPos, $frameShape, $year, $id]);
             set_flash('success', 'Data anggota berhasil diperbarui.');
         } else {
-            $stmt = $db->prepare("INSERT INTO tp_profile_members (batch_id, name, photo, instansi, jurusan, posisi, sort_order, status, photo_position, frame_shape, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");
-            $stmt->execute([$batchId, $name, $photo, $instansi, $jurusan, $posisi, $sortOrder, $status, $photoPos, $frameShape]);
+            $stmt = $db->prepare("INSERT INTO tp_profile_members (batch_id, name, photo, instansi, jurusan, posisi, sort_order, status, photo_position, frame_shape, year, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");
+            $stmt->execute([$batchId, $name, $photo, $instansi, $jurusan, $posisi, $sortOrder, $status, $photoPos, $frameShape, $year]);
             set_flash('success', 'Anggota baru berhasil ditambahkan.');
         }
         header('Location: profil.php?tab=tim');
@@ -482,7 +496,7 @@ try {
                         </div>
 
                         <div class="space-y-1 text-xs text-slate-400 mb-4 bg-[#0c131c] p-2.5 rounded-xl border border-[#1a2636]">
-                            <div class="text-[11px]"><span class="text-slate-500">Batch:</span> <?= htmlspecialchars($m['batch_name']) ?></div>
+                            <div class="text-[11px]"><span class="text-slate-500">Tahun:</span> <span class="text-amber-400 font-bold"><?= htmlspecialchars($m['year'] ?? '2025') ?></span> | <span class="text-slate-500">Batch:</span> <?= htmlspecialchars($m['batch_name']) ?></div>
                             <?php if (!empty($m['instansi'])): ?>
                                 <div class="text-[11px] truncate"><span class="text-slate-500">Asal:</span> <?= htmlspecialchars($m['instansi']) ?></div>
                             <?php endif; ?>
@@ -525,13 +539,23 @@ try {
                     <input type="hidden" id="mem_id" name="member_id" value="0">
                     <input type="hidden" id="mem_existing_photo" name="existing_photo" value="">
 
-                    <div>
-                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Pilih Kategori</label>
-                        <select id="mem_section" name="section_id" onchange="filterBatches()" required class="w-full h-10 px-3 rounded-xl bg-[#0b1017] border border-[#1f2d3d] text-white text-xs focus:outline-none focus:border-primary">
-                            <?php foreach ($sections as $sec): ?>
-                                <option value="<?= $sec['id'] ?>"><?= htmlspecialchars($sec['title']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Pilih Kategori</label>
+                            <select id="mem_section" name="section_id" onchange="filterBatches()" required class="w-full h-10 px-3 rounded-xl bg-[#0b1017] border border-[#1f2d3d] text-white text-xs focus:outline-none focus:border-primary">
+                                <?php foreach ($sections as $sec): ?>
+                                    <option value="<?= $sec['id'] ?>"><?= htmlspecialchars($sec['title']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Pilih Tahun</label>
+                            <select id="mem_year" name="year" required class="w-full h-10 px-3 rounded-xl bg-[#0b1017] border border-[#1f2d3d] text-white text-xs focus:outline-none focus:border-primary">
+                                <?php for ($y = 2024; $y <= 2030; $y++): ?>
+                                    <option value="<?= $y ?>" <?= $y === 2025 ? 'selected' : '' ?>>Tahun <?= $y ?></option>
+                                <?php endfor; ?>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
@@ -636,6 +660,7 @@ try {
         document.getElementById('memberModalTitle').innerText = 'Tambah Anggota Tim / Magang';
         document.getElementById('mem_id').value = '0';
         document.getElementById('mem_existing_photo').value = '';
+        document.getElementById('mem_year').value = '2025';
         document.getElementById('mem_name').value = '';
         document.getElementById('mem_instansi').value = '';
         document.getElementById('mem_jurusan').value = '';
@@ -656,6 +681,7 @@ try {
         document.getElementById('mem_id').value = data.id;
         document.getElementById('mem_existing_photo').value = data.photo || '';
         document.getElementById('mem_section').value = data.sec_id;
+        document.getElementById('mem_year').value = data.year || '2025';
         filterBatches();
         document.getElementById('mem_batch').value = data.batch_id;
         document.getElementById('mem_name').value = data.name;

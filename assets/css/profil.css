@@ -519,8 +519,129 @@
     box-shadow: 0 4px 12px rgba(30, 93, 230, 0.25);
 }
 
+/* Card Tag (Year / Batch indicator) */
+.prof-card-tag {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    letter-spacing: 0.3px;
+}
+
+.prof-card-tag.tag-2025 {
+    background: #e0f2fe;
+    color: #0369a1;
+    border-color: #bae6fd;
+}
+
+.prof-card-tag.tag-2026 {
+    background: #fef3c7;
+    color: #b45309;
+    border-color: #fde68a;
+}
+
+/* Placeholder Card (Slots for 2026) */
+.prof-team-card.is-placeholder {
+    border: 2px dashed #93c5fd;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.05);
+}
+
+.prof-team-card.is-placeholder:hover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+    transform: translateY(-4px);
+    box-shadow: 0 10px 24px rgba(59, 130, 246, 0.12);
+}
+
+.prof-team-card.is-placeholder .prof-avatar-wrap {
+    border: 2px dashed #38bdf8;
+    background: #f0f9ff;
+    color: #0284c7;
+}
+
+.prof-team-card.is-placeholder .prof-team-role {
+    background: #fef3c7;
+    color: #b45309;
+    border-color: #fde68a;
+}
+
+/* Filter Controls Container - Sejajar Horizontal */
+.prof-filters-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px 28px;
+    flex-wrap: wrap;
+}
+
+.prof-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+@media (min-width: 992px) {
+    .prof-filter-row + .prof-filter-row {
+        position: relative;
+        padding-left: 20px;
+    }
+    .prof-filter-row + .prof-filter-row::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 1px;
+        height: 22px;
+        background: #cbd5e1;
+    }
+}
+
+.prof-filter-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: 4px;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .prof-filters-wrapper {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        width: 100%;
+    }
+    .prof-filter-row {
+        justify-content: flex-start;
+        width: 100%;
+    }
+}
+
 .prof-team-card.fade-hidden {
     display: none !important;
+}
+
+.prof-empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 44px 20px;
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 20px;
+    color: #64748b;
+    font-size: 13.5px;
+    font-weight: 500;
 }
 
 /* --- Responsive Adjustments --- */
